@@ -1,5 +1,9 @@
 module DataFormatter
 
-# Write your package code here.
+using DataFrames: DataFrame, groupby, Not, insertcols!
+
+include("types.jl")
+include("simulation.jl")
+include("vizualize.jl")
 
 end
