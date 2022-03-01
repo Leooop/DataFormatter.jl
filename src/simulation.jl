@@ -1,21 +1,24 @@
-
+using LinearAlgebra
 
 function simulate!(dataset::Dataset, p)
     simulate!.(dataset.ponctual,Ref(p))
     simulate!.(dataset.timeseries, Ref(p))
+    nothing
 end
 
-##################################
-### SIMULATE PONCTUAL DATASETS ###
-##################################
+
+#################################
+## SIMULATE PONCTUAL DATASETS ###
+#################################
 
 function simulate!(pds::PonctualDataset, p)
     data = pds.data
     for i in 1:nrow(data)
         data_params = data[i,Not(pds.target)] # Dataframerow without target variable
-        df_sol = p.f.ponctual(p, data_params, pds.target) 
-        (i == 1) && insert_sim_cols!(pds, names(df_sol))
-        data[i,sol_colnames] .= df_sol[1,!]
+        df_sol::DataFrame = p.f.ponctual(p, data_params, pds.target)
+        sol_colnames::Vector{String} = names(df_sol)
+        (i == 1) && insert_sim_cols!(pds, sol_colnames)
+        data[i,sol_colnames] .= [df_sol[1,1], df_sol[1,2]]
     end
     return nothing
 end
@@ -24,17 +27,43 @@ end
 ### SIMULATE TIMESERIES DATASETS ###
 ####################################
 
-function simulate!(tsds::TimeseriesDataset, p)
+function simulate!(tsds::TimeseriesDataset, p ; allow_mismatch=false) 
     data = tsds.data
     gdata = groupby(data,tsds.var)
     for i in 1:length(gdata)
         data_params = gdata[i][1,Not([tsds.target ; :t])] # Dataframerow without target variable
-        df_sol = p.f.timeseries(p, data_params, tsds.target, gdata[i].t) # 
-        sol_colnames = names(df_sol)
-        (i == 1) && insert_sim_cols!(tsds, sol_colnames)
-        gdata[i][1:size(df_sol,1),sol_colnames] .= df_sol[:,sol_colnames]
+        sim_data = p.f.timeseries(p, data_params, tsds.target, gdata[i].t)
+        (i==1) && set_clean_sim_cols!(data, sim_data)
+        !allow_mismatch && check_matching_times!(gdata[i],sim_data)
+        merge_sim_data!(gdata[i],sim_data)
     end
     return nothing
+end
+
+
+function merge_sim_data!(data,sim_data)
+    colnames_sim = names(sim_data)
+    sim_length = nrow(sim_data)
+    for simname in colnames_sim
+        if occursin("_sim", simname)
+            @views data[1:sim_length,simname] .= sim_data[1:sim_length,simname]
+            @views data[sim_length+1:end,simname] .= missing
+        end
+    end
+    return data
+end
+
+check_matching_times!(data,sim_data) = @assert data.t == sim_data.t
+
+function set_clean_sim_cols!(data, sim_data)
+    colnames_sim = names(sim_data)
+    for simname in colnames_sim
+        if occursin("_sim", simname)
+            @transform!(data,$simname = missing)
+            data[!,simname] = Vector{Union{Float64,Missing}}(data[!,simname])
+        end
+    end
+    return data
 end
 
 ### HELPER ###
@@ -49,4 +78,20 @@ function insert_sim_cols!(ds::DatasetType, sim_colnames)
     end
 end
 
-export simulate!
+
+# get_data_covmat(ds::DataType) = Diagonal(ds.data.std)
+# function get_data_covmat(ds::Dataset)
+#     std_vec = Float64[]
+#     for pds in ds.ponctual
+#         append!(std_vec, pds.data.std)
+#     end
+#     for tsds in ds.timeseries
+#         append!(std_vec, tsds.data.std)
+#     end
+#     Diagonal(std_vec)
+# end
+get_data_covmat(target_df::AbstractDataFrame) = Diagonal(target_df.std)
+
+g(m, p, ds::Union{Dataset,DatasetType}) = (p.mp .= m ; simulate!(ds,p) ; get_target_data(ds).target_sim)
+
+export simulate!, get_data_covmat, g

@@ -1,9 +1,10 @@
 module DataFormatter
 
-using DataFrames: DataFrame, groupby, Not, insertcols!
+using DataFrames
+using DataFrameMacros
 
 include("types.jl")
 include("simulation.jl")
-include("vizualize.jl")
+include("helper_functions.jl")
 
 end

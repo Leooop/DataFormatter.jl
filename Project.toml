@@ -4,7 +4,9 @@ authors = ["Léo Petit <leo.petit@live.fr> and contributors"]
 version = "0.1.0"
 
 [deps]
+DataFrameMacros = "75880514-38bc-4a95-a458-c2aea5a3a702"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 julia = "1.6"

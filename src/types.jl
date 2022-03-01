@@ -11,11 +11,15 @@ abstract type DatasetType end
 struct PonctualDataset <: DatasetType
     data::DataFrame
     target::Vector{Symbol}
+    function PonctualDataset(data, target ; keys::Vector{tK}=Symbol[]) where tK<:Union{String,Symbol}
+        check_keys(names(data),keys)
+        new(data, target)
+    end
 end
-function PonctualDataset(data, target ; keys::Vector{tK}=Symbol[]) where tK<:Union{String,Symbol}
-    check_keys(names(data),keys)
-    PonctualDataset(data, target)
-end
+# function PonctualDataset(data, target ; keys::Vector{tK}=Symbol[]) where tK<:Union{String,Symbol}
+#     check_keys(names(data),keys)
+#     PonctualDataset(data, target)
+# end
 PonctualDataset(data, target::Symbol) = PonctualDataset(data, [target])
 
 
@@ -24,15 +28,21 @@ struct TimeseriesDataset <: DatasetType
     data::DataFrame
     target::Vector{Symbol}
     var::Symbol
+    function TimeseriesDataset(data, target, var ; keys::Vector{tK}=Symbol[]) where tK<:Union{String,Symbol}
+        check_keys(names(data),keys)
+        new(data, target, var)
+    end
 end
-function TimeseriesDataset(data, target, var ; keys::Vector{tK}=Symbol[]) where tK<:Union{String,Symbol}
-    check_keys(names(data),keys)
-    TimeseriesDataset(data, target, var)
-end
+
+# function TimeseriesDataset(data, target, var ; keys::Vector{tK}=Symbol[]) where tK<:Union{String,Symbol}
+#     check_keys(names(data),keys)
+#     TimeseriesDataset(data, target, var)
+# end
 TimeseriesDataset(data, target::Symbol, var) = TimeseriesDataset(data, [target], var)
 
 # helper functions :
-function group(ds::TimeseriesDataset)
+function group(ds::TimeseriesDataset ; rounding_digits=1)
+    @transform!(ds.data, $(ds.var) = round($(ds.var), digits=rounding_digits))
     groupby(ds.data,ds.var)
 end
 
