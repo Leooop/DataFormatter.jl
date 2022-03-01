@@ -56,11 +56,18 @@ end
 check_matching_times!(data,sim_data) = @assert data.t == sim_data.t
 
 function set_clean_sim_cols!(data, sim_data)
+    colnames = names(data)
     colnames_sim = names(sim_data)
+    eltypesim = eltype(sim_data[:,filter(!=("t"), colnames_sim)[1]])
     for simname in colnames_sim
         if occursin("_sim", simname)
-            @transform!(data,$simname = missing)
-            data[!,simname] = Vector{Union{Float64,Missing}}(data[!,simname])
+            #@transform!(data,$simname = missing)
+            if (simname ∈ colnames) & (eltypesim <: eltype(data[!,simname]))
+                data[!,simname] .= missing
+            else
+                data[!,simname] = Vector{Union{eltypesim,Missing}}(undef,nrow(data))
+                fill!(data[!,simname],missing)
+            end
         end
     end
     return data
