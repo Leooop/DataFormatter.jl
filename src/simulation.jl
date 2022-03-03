@@ -13,7 +13,7 @@ end
 
 function simulate!(pds::PonctualDataset, p)
     data = pds.data
-    for i in 1:nrow(data)
+    for i in 1:size(data,1)
         data_params = data[i,Not(pds.target)] # Dataframerow without target variable
         df_sol::DataFrame = p.f.ponctual(p, data_params, pds.target)
         sol_colnames::Vector{String} = names(df_sol)
@@ -29,7 +29,7 @@ end
 
 function simulate!(tsds::TimeseriesDataset, p ; allow_mismatch=false) 
     data = tsds.data
-    gdata = groupby(data,tsds.var)
+    gdata = group(tsds)
     for i in 1:length(gdata)
         data_params = gdata[i][1,Not([tsds.target ; :t])] # Dataframerow without target variable
         sim_data = p.f.timeseries(p, data_params, tsds.target, gdata[i].t)
@@ -43,7 +43,7 @@ end
 
 function merge_sim_data!(data,sim_data)
     colnames_sim = names(sim_data)
-    sim_length = nrow(sim_data)
+    sim_length = size(sim_data,1)
     for simname in colnames_sim
         if occursin("_sim", simname)
             @views data[1:sim_length,simname] .= sim_data[1:sim_length,simname]
