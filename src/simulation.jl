@@ -62,10 +62,10 @@ function set_clean_sim_cols!(data, sim_data)
     for simname in colnames_sim
         if occursin("_sim", simname)
             #@transform!(data,$simname = missing)
-            if (simname ∈ colnames) & (eltypesim <: eltype(data[!,simname]))
-                data[!,simname] .= missing
+            if (simname ∈ colnames) && (eltypesim <: eltype(data[!,simname]))
+                fill!(data[!,simname],missing)
             else
-                data[!,simname] = Vector{Union{eltypesim,Missing}}(undef,nrow(data))
+                data[!,simname] = Vector{Union{eltypesim,Missing}}(undef,size(data,1))
                 fill!(data[!,simname],missing)
             end
         end
