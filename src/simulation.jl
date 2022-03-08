@@ -1,8 +1,8 @@
 using LinearAlgebra
 
-function simulate!(dataset::Dataset, p)
+function simulate!(dataset::Dataset, p ; allow_mismatch=false)
     simulate!.(dataset.ponctual,Ref(p))
-    simulate!.(dataset.timeseries, Ref(p))
+    simulate!.(dataset.timeseries, Ref(p) ; allow_mismatch)
     nothing
 end
 
@@ -11,13 +11,14 @@ end
 ## SIMULATE PONCTUAL DATASETS ###
 #################################
 
-function simulate!(pds::PonctualDataset, p)
+function simulate!(pds::PonctualDataset, p ; allow_mismatch=false)
     data = pds.data
     for i in 1:size(data,1)
         data_params = data[i,Not(pds.target)] # Dataframerow without target variable
         df_sol::DataFrame = p.f.ponctual(p, data_params, pds.target)
         sol_colnames::Vector{String} = names(df_sol)
         (i == 1) && insert_sim_cols!(pds, sol_colnames)
+        allow_mismatch && throw(error("allow_mismatch kwarg must be false"))
         data[i,sol_colnames] .= [df_sol[1,1], df_sol[1,2]]
     end
     return nothing

@@ -1,5 +1,5 @@
 function get_target_data(ds::Dataset)
-    df_target = DataFrame([:target, :target_sim, :std] .=> Ref(Float64[]))
+    df_target = DataFrame([:target, :target_sim, :std, :target_name] .=> [Float64[], Float64[], Float64[], Symbol[]])
     for i in 1:length(ds.ponctual)
         append!(df_target, get_target_data(ds.ponctual[i]))
         #mat_target = [mat_target ; Matrix{Float64}(get_target_data(ds.ponctual[i]))]
