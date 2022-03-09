@@ -86,18 +86,6 @@ function insert_sim_cols!(ds::DatasetType, sim_colnames)
     end
 end
 
-
-# get_data_covmat(ds::DataType) = Diagonal(ds.data.std)
-# function get_data_covmat(ds::Dataset)
-#     std_vec = Float64[]
-#     for pds in ds.ponctual
-#         append!(std_vec, pds.data.std)
-#     end
-#     for tsds in ds.timeseries
-#         append!(std_vec, tsds.data.std)
-#     end
-#     Diagonal(std_vec)
-# end
 get_data_covmat(target_df::AbstractDataFrame) = Diagonal(target_df.std)
 
 g(m, p, ds::Union{Dataset,DatasetType}) = (p.mp .= m ; simulate!(ds,p) ; get_target_data(ds).target_sim)
