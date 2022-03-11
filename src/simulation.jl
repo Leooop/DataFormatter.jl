@@ -19,7 +19,9 @@ function simulate!(pds::PonctualDataset, p ; allow_mismatch=false)
         sol_colnames::Vector{String} = names(df_sol)
         (i == 1) && insert_sim_cols!(pds, sol_colnames)
         allow_mismatch && throw(error("allow_mismatch kwarg must be false"))
-        data[i,sol_colnames] .= [df_sol[1,1], df_sol[1,2]]
+        for sol_colname in sol_colnames
+            data[i,sol_colname] = df_sol[1,sol_colname]
+        end
     end
     return nothing
 end

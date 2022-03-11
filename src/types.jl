@@ -1,3 +1,5 @@
+import Base: length
+
 Maybe(T::Type) = Union{T,Nothing}
 
 ###################
@@ -22,6 +24,7 @@ end
 # end
 PonctualDataset(data, target::Symbol) = PonctualDataset(data, [target])
 
+Base.length(pd::PonctualDataset) = size(pd.data,1)
 
 ### TimeseriesDataset ###
 struct TimeseriesDataset <: DatasetType
@@ -51,6 +54,8 @@ function get_timeseries(tsds::TimeseriesDataset,val)
     return TimeseriesDataset(df[df[:,tsds.var] .== val,:], tsds.target, tsds.var)
 end
 
+Base.length(ts::TimeseriesDataset) = size(ts.data,1)
+
 
 # ALL DATASETS :
 Base.@kwdef struct Dataset
@@ -59,8 +64,14 @@ Base.@kwdef struct Dataset
 end
 Dataset(tsd::Vector{TimeseriesDataset},pd::Vector{PonctualDataset}) = Dataset(pd,tsd)
 Dataset(pd::PonctualDataset,tsd::TimeseriesDataset) = Dataset([pd],[tsd])
+Dataset(tsd::TimeseriesDataset,pd::PonctualDataset) = Dataset([pd],[tsd])
 Dataset(pd::Vector{PonctualDataset},tsd::TimeseriesDataset) = Dataset(pd,[tsd])
+Dataset(tsd::TimeseriesDataset, pd::Vector{PonctualDataset}) = Dataset(pd,[tsd])
 Dataset(pd::PonctualDataset,tsd::Vector{TimeseriesDataset}) = Dataset([pd],tsd)
+Dataset(tsd::Vector{TimeseriesDataset}, pd::PonctualDataset) = Dataset([pd],tsd)
+
+ndatasets(ds::Dataset) = length(ds.ponctual) + length(ds.timeseries)
+Base.length(ds::Dataset) = sum(length(ds.ponctual)) + sum(length(ds.timeseries))
 
 
 function check_keys(colnames::Vector{String},keys::Vector{tK}) where tK<:Union{String,Symbol}
@@ -72,4 +83,4 @@ function check_keys(colnames::Vector{String},keys::Vector{tK}) where tK<:Union{S
 end
 
 
-export DatasetType, PonctualDataset, TimeseriesDataset, Dataset, group, get_timeseries
+export DatasetType, PonctualDataset, TimeseriesDataset, Dataset, group, get_timeseries, ndatasets
