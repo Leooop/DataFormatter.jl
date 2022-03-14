@@ -37,7 +37,7 @@ function simulate!(tsds::TimeseriesDataset, p ; allow_mismatch=false)
         data_params = gdata[i][1,Not([tsds.target ; :t])] # Dataframerow without target variable
         sim_data = p.f.timeseries(p, data_params, tsds.target, gdata[i].t)
         (i==1) && set_clean_sim_cols!(data, sim_data)
-        !allow_mismatch && check_matching_times!(gdata[i],sim_data)
+        check_matching_times!(gdata[i],sim_data, allow_mismatch)
         merge_sim_data!(gdata[i],sim_data)
     end
     return nothing
@@ -56,7 +56,15 @@ function merge_sim_data!(data,sim_data)
     return data
 end
 
-check_matching_times!(data,sim_data) = @assert data.t == sim_data.t
+function check_matching_times!(data,sim_data,allow_mismatch)
+    if allow_mismatch
+        for i in eachindex(sim_data.t)
+            @assert sim_data.t[i] == data.t[i]
+        end
+    else
+        @assert all(data.t .== sim_data.t)
+    end
+end
 
 function set_clean_sim_cols!(data, sim_data)
     colnames = names(data)
