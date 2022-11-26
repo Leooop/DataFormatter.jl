@@ -10,7 +10,7 @@ abstract type DatasetType end
 
 function group(ds::DatasetType ; rounding_digits=nothing)
     if !isnothing(rounding_digits) 
-        @transform!(ds.data, $(ds.group_on) = round($(ds.group_on), digits=rounding_digits))
+        @transform!(ds.data, {ds.group_on} = round({ds.group_on}, digits=rounding_digits))
     end
     return isnothing(ds.group_on) ? [ds.data] : groupby(ds.data,ds.group_on)
 end
